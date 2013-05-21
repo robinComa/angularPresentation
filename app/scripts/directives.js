@@ -1,16 +1,10 @@
-angular.module('angularPresentationApp.directives', []).directive('butterbar', ['$rootScope',
-    function($rootScope) {
-        return {
-            link: function(scope, element, attrs) {
-                $rootScope.$on('$routeChangeStart', function() {
-                    element.removeClass('icon-twitter').addClass('icon-spinner icon-spin');
-                });
-                $rootScope.$on('$routeChangeSuccess', function() {
-                    setTimeout(function(){
-                        element.removeClass('icon-spinner icon-spin').addClass('icon-twitter');
-                    },200);
-                });
-            }
-        };
-    }
-]);
+angular.module('angularPresentationApp.directives', []).directive('formatedtext', function() {
+    return {
+        require: 'ngModel',
+        link: function(scope, elm, attrs, ctrl) {
+            ctrl.$render = function(value) {
+                elm.text(scope.content2.toLowerCase());
+            };
+        }
+    };
+});

@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en" ng-app>
+<html lang="en">
 
 	<head>
 		<meta charset="utf-8">
 
-		<title>reveal.js - The HTML Presentation Framework</title>
+		<title>AngularJS Presentation (with reveal.js - The HTML Presentation Framework)</title>
 
 		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
 		<meta name="author" content="Hakim El Hattab">
@@ -36,14 +36,20 @@
                 width: 100%!important;
             }
         </style>
+
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
+        <script src="scripts/angular-resource.min.js"></script>
+        <script src="scripts/app.js"></script>
+        <script src="scripts/controllers.js"></script>
+        <script src="scripts/directives.js"></script>
+        <script src="scripts/services.js"></script>
 	</head>
 
 	<body>
-
 		<div class="reveal">
 
 			<!-- Any section element inside of this container is displayed as a slide -->
-			<div class="slides">
+			<div class="slides" ng-app="angularPresentationApp">
 
 				<section>
 
@@ -60,13 +66,65 @@
                     </a>
 				</section>
 
-                <section ng-controller="Page1Ctr" class="row-fluid">
+                <section class="row-fluid">
 
-                    <script>function Page1Ctr($scope){
+                    <script>function Page1Ctrl($scope){
                         $scope.summary = [
+                            {
+                                title   : 'Model / View / Controller',
+                                link    : '#/1'
+                            },
                             {
                                 title   : 'Two-way Data Binding',
                                 link    : '#/2'
+                            },
+                            {
+                                title   : 'Directives',
+                                link    : '#/3'
+                            },
+                            {
+                                title   : 'Filters',
+                                link    : '#/4'
+                            },
+                            {
+                                title   : 'Custom Filters',
+                                link    : '#/5'
+                            },
+                            {
+                                title   : 'Routing + view +Templates',
+                                link    : '#/6'
+                            },
+                            {
+                                title   : 'Dependency injection',
+                                link    : '#/7'
+                            },
+                            {
+                                title   : 'Events',
+                                link    : '#/8'
+                            },
+                            {
+                                title   : 'Services',
+                                link    : '#/9'
+                            },
+                            {
+                                title   : 'Unit Tests',
+                                link    : '#/10'
+                            },
+                            {
+                                title   : 'End to End tests',
+                                link    : '#/11'
+                            },
+                            {
+                                title   : 'Development tools',
+                                link    : '#/12'
+                            },
+                            {
+                                title   : 'Demo',
+                                link    : '#/13'
+                            },
+                            {
+                                title   : 'Links',
+                                link    : '#/14'
                             }
                         ];
                     }
@@ -77,27 +135,30 @@
                         <div class="span6">
                             <h2>Summary</h2>
                             <hr>
-                            <ul>
+                            <ul ng-controller="Page1Ctrl">
                                 <li ng-repeat="part in summary">
                                     <a ng-href="{{part.link}}">{{part.title}}</a>
                                 </li>
                             </ul>
                         </div>
                         <div class="span6">
+                            <h3>Controller</h3>
                           <pre><code data-trim contenteditable>
-function Page1Ctr($scope){
-    $scope.summary = [
+function Page1Ctrl($scope){
+    $scope.summary = [  //summary is the model
         {
-            title   : 'Two-way Data Binding',
-            link    : '#/2'
+            title   : 'Model / View / Controller',
+            link    : '#/1'
         },
         ...
     ];
 }
                           </code></pre>
 
+                            <h3>View</h3>
                             <pre><code data-trim contenteditable>
-&lt;ul&gt;
+&lt;ul ng-controller="Page1Ctrl"&gt;
+    <!-- summary is the model -->
     &lt;li ng-repeat=&quot;part in summary&quot;&gt;
         &lt;a ng-href=&quot;{{part.link} }&quot;&gt;{{part.title} }&lt;/a&gt;
     &lt;/li&gt;
@@ -108,11 +169,11 @@ function Page1Ctr($scope){
 
                 </section>
 
-				<section ng-controller="Page2Ctr" class="row-fluid">
+				<section ng-controller="Page2Ctrl" class="row-fluid">
 
                     <div class="span12">
                         <div class="span6">
-                            <script>function Page2Ctr($scope){
+                            <script>function Page2Ctrl($scope){
                                 $scope.title = 'Two-way Data binding';
                             }
                             </script>
@@ -128,7 +189,7 @@ function Page2Ctr($scope){
                     </code></pre>
 
 					<pre><code data-trim contenteditable>
-&lt;div ng-controller=&quot;Page2Ctr&quot;&gt;
+&lt;div ng-controller=&quot;Page2Ctrl&quot;&gt;
     &lt;h2&gt;{{title} }&lt;/h2&gt;
 
     &lt;input type=&quot;text&quot; ng-model=&quot;title&quot;/&gt;
@@ -137,6 +198,418 @@ function Page2Ctr($scope){
                         </div>
                     </div>
 				</section>
+
+                <section ng-app="directive" class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <style>
+                                div[contentEditable], div[contentEditableformated] {
+                                    cursor: pointer;
+                                    background-color: #D0D0D0;
+                                    margin-bottom: 1em;
+                                    padding: 1em;
+                                }
+                            </style>
+                            <script>
+                            angular.module('directive', []).directive('contenteditable', function() {
+                                return {
+                                    require: 'ngModel',
+                                    link: function(scope, elm, attrs, ctrl) {
+                                        // view -> model
+                                        elm.bind('blur', function() {
+                                            scope.$apply(function() {
+                                                ctrl.$setViewValue(elm.html());
+                                            });
+                                        });
+
+                                        // model -> view
+                                        ctrl.$render = function(value) {
+                                            elm.html(value);
+                                        };
+
+                                        // load init value from DOM
+                                        ctrl.$setViewValue(elm.html());
+                                    }
+                                };
+                            });
+                            </script>
+                            <h2 contentEditable="true" ng-init="content = 'Directives'" ng-model="content">{{content}}</h2>
+                            <hr>
+                            <pre><code data-trim contenteditable>
+angular.module('directive', []).directive('contenteditable', function() {
+    return {
+        require: 'ngModel',
+        link: function(scope, elm, attrs, ctrl) {
+            // view -> model
+            elm.bind('blur', function() {
+                scope.$apply(function() {
+                    ctrl.$setViewValue(elm.html());
+                });
+            });
+            // model -> view
+            ctrl.$render = function(value) {
+                elm.html(value);
+            };
+            // load init value from DOM
+            ctrl.$setViewValue(elm.html());
+        }
+    };
+});
+                            </code></pre>
+                        </div>
+                        <div class="span6">
+                            <pre><code data-trim contenteditable>
+&lt;h2 contentEditable=&quot;true&quot;
+    ng-init=&quot;content = 'Directives'&quot;
+    ng-model=&quot;content&quot;&gt;
+    {{content} }
+&lt;/h2&gt;
+                            </code></pre>
+
+                            <pre><code data-trim contenteditable>
+div[contentEditable] {
+    cursor: pointer;
+    background-color: #D0D0D0;
+    margin-bottom: 1em;
+    padding: 1em;
+}
+                            </code></pre>
+
+                        </div>
+                    </div>
+                </section>
+
+                <section ng-controller="Page4Ctrl" class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <script>function Page4Ctrl($scope){
+                                $scope.date = new Date();
+                                $scope.amount = 1023.9;
+                                setInterval(function(){
+                                    $scope.$apply(function() {
+                                        $scope.date = new Date();
+                                    });
+                                }, 1000);
+                            }
+                            </script>
+                            <h2>Filters</h2>
+                            <hr>
+                            <p>{{date | date:'MM/dd/yyyy @ h:mm:ss'}}</p>
+                            <p><strong>{{amount | currency}}</strong></p>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+function Page4Ctrl($scope){
+    $scope.date = new Date();
+    $scope.amount = 1023.9;
+    setInterval(function(){
+        $scope.$apply(function() {
+            $scope.date = new Date();
+        });
+    }, 1000);
+}
+                    </code></pre>
+
+					<pre><code data-trim contenteditable>
+<p>{{date | date:'MM/dd/yyyy @ h:mm:ss'} }</p>
+<p><strong>{{amount | currency} }</strong></p>                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Custom Filters</h2>
+                            <hr>
+                            <textarea ng-model="content2" class="span6">{{content2}}</textarea>
+                            <pre formatedtext ng-model="content2" ng-init="content2 = 'Custom fILTERs. REwrite TExT.'">jiji</pre>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+angular.module('angularPresentationApp.directives', [])
+    .directive('formatedtext', function() {
+    return {
+        require: 'ngModel',
+        link: function(scope, elm, attrs, ctrl) {
+            ctrl.$render = function(value) {
+                elm.text(scope.content.toLowerCase());
+            };
+        }
+    };
+});
+                    </code></pre>
+
+					<pre><code data-trim contenteditable>
+&lt;textarea ng-model=&quot;content&quot; class=&quot;span6&quot;&gt;
+    {{content} }
+&lt;/textarea&gt;
+&lt;pre
+    formatedtext
+    ng-model=&quot;content&quot;
+    ng-init=&quot;content = 'Custom fILTERs. REwrite TExT.'&quot;&gt;
+&lt;/pre&gt;
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6" ng-controller="Page6Ctrl">
+                            <script>
+                                function Page6Ctrl($scope){
+                                    $scope.tweets = [{
+                                        text : 'This is a Tweet',
+                                        profile_image_url : 'https://secure.gravatar.com/avatar/f104b99a2302c2fdbde69af04535341d?s=400&d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png',
+                                        from_user_name : 'Robin Coma Delpérier',
+                                        from_user : 'robinComa',
+                                        created_at : new Date()
+                                    }, {
+                                        text : 'This is another Tweet',
+                                        profile_image_url : 'https://secure.gravatar.com/avatar/f104b99a2302c2fdbde69af04535341d?s=400&d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png',
+                                        from_user_name : 'Robin Coma Delpérier',
+                                        from_user : 'robinComa',
+                                        created_at : new Date()
+                                    }];
+                                }
+                            </script>
+                            <h2>Routing + view +Templates</h2>
+                            <hr>
+                            <table class="table span11 offset1">
+                                <tr ng-repeat="tweet in tweets">
+                                    <td class="row-fluid">
+                                        <div class="span2">
+                                            <a ng-href="#/profile/{{tweet.from_user}}">
+                                                <img ng-src="{{tweet.profile_image_url}}" class="img-rounded"/>
+                                            </a>
+                                        </div>
+                                        <div class="span10">
+                                            <p>
+                                                <b>{{tweet.from_user_name}}</b> <span class="muted">@{{tweet.from_user}}</span>
+                                                <span class="muted pull-right">{{tweet.created_at | date:medium}}</span>
+                                            </p>
+                                            <p>{{tweet.text}}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+angular.module('angularDemoApp', []).config(function ($routeProvider) {
+    $routeProvider.when('/', {
+        templateUrl : 'views/tweets.html',
+        controller  : 'TweetsCtrl'
+    }).otherwise({
+        redirectTo  : '/'
+    });
+});
+                    </code></pre>
+
+                     <pre><code data-trim contenteditable>
+function TweetsCtrl($scope){
+    $scope.tweets = [{
+            text : 'This is a Tweet',
+            profile_image_url : 'secure.gravatar.com/...',
+            from_user_name : 'Robin Coma Delpérier',
+            from_user : 'robinComa',
+            created_at : new Date()
+        }, {...}];
+}
+                     </code></pre>
+
+                    <pre><code data-trim contenteditable>
+&lt;table class=&quot;table span11 offset1&quot;&gt;
+    &lt;tr ng-repeat=&quot;tweet in tweets&quot;&gt;
+        &lt;td class=&quot;row-fluid&quot;&gt;
+            &lt;div class=&quot;span2&quot;&gt;
+                &lt;a ng-href=&quot;#/profile/{{tweet.from_user}}&quot;&gt;
+                    &lt;img ng-src=&quot;{{tweet.profile_image_url}}&quot; class=&quot;img-rounded&quot;/&gt;
+                &lt;/a&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;span10&quot;&gt;
+                &lt;p&gt;
+                &lt;b&gt;{{tweet.from_user_name}}&lt;/b&gt; &lt;span class=&quot;muted&quot;&gt;@{{tweet.from_user}}&lt;/span&gt;
+                &lt;span class=&quot;muted pull-right&quot;&gt;{{tweet.created_at | date:medium}}&lt;/span&gt;
+                &lt;/p&gt;
+                &lt;p&gt;{{tweet.text}}&lt;/p&gt;
+            &lt;/div&gt;
+        &lt;/td&gt;
+    &lt;/tr&gt;
+&lt;/table&gt;
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Dependency injection</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Events</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Services</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Units Tests</h2>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>End to End tests</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Development tools</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Demo</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+
+                    <pre><code data-trim contenteditable>
+                    </code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Links</h2>
+                            <hr>
+                            <iframe width="560" height="315" src="http://www.youtube.com/embed/wCVwdvufTds" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        <div class="span6">
+                            <ul>
+                                <li>
+                                     <a href="http://angularjs.org/">AngularJS Official web site</a>
+                                </li>
+                                <li>
+                                    <a href="https://www.google.fr/search?q=angularjs+book&aq=f&oq=angularjs+book&aqs=chrome.0.57j0l2j62l3.2835j0&sourceid=chrome&ie=UTF-8#sclient=psy-ab&q=AngularJS+By+Brad+Green%2C+Shyam+Seshadri&oq=AngularJS+By+Brad+Green%2C+Shyam+Seshadri&gs_l=serp.3..0i19l2.1281.1281.0.1626.1.1.0.0.0.0.145.145.0j1.1.0...0.0...1c.1.14.psy-ab.eacTeEWdMVc&pbx=1&bav=on.2,or.r_cp.r_qf.&bvm=bv.46865395,d.ZGU&fp=54073061137a9c4d&biw=1366&bih=681">AngularJS Book By Brad Green, Shyam Seshadri</a>
+                                </li>
+                                <li>
+                                    <a href="https://chrome.google.com/webstore/detail/angularjs-batarang/ighdmehidhipcmcojjgiloacoafjmpfk">Google chrome plugin</a>
+                                </li>
+                                <li>
+                                    <a href="http://www.jetbrains.com/webstorm/">Web storm (IDE)</a>
+                                </li>
+                                <li>
+                                    <a href="http://yeoman.io/">Yeoman (Modern workflow for modern webapps)</a>
+                                </li>
+                                <li>
+                                    <a href="http://karma-runner.github.io/">Karma (Spectacular Test Runner for JavaScript)</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <h2>Thanks and enjoy</h2>
+                            <hr>
+                        </div>
+                        <div class="span6">
+                            <img src="http://lauterry.github.io/slides-prez-angular/img/angularjs.png"/>
+                        </div>
+                    </div>
+                </section>
 
 			</div>
 
@@ -173,12 +646,7 @@ function Page2Ctr($scope){
 
 		</script>
 
-        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
-        <script src="scripts/angular-resource.min.js"></script>
-        <script src="scripts/app.js"></script>
-        <script src="scripts/controllers.js"></script>
-        <script src="scripts/directives.js"></script>
-        <script src="scripts/services.js"></script>
+        <a href="https://github.com/robinComa/angularPresentation"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_green_007200.png" alt="Fork me on GitHub"></a>
 
 	</body>
 </html>
