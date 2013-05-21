@@ -1,1 +1,1 @@
-angular.module('angularPresentationApp', ['angularPresentationApp.services', 'angularPresentationApp.directives']);
+angular.module('angularPresentationApp', ['angularPresentationApp.services', 'angularPresentationApp.directives', 'ngCookies']);

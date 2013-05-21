@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 
 	<head>
 		<meta charset="utf-8">
@@ -39,6 +39,7 @@
 
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
         <script src="scripts/angular-resource.min.js"></script>
+        <script src="scripts/angular-cookies.min.js"></script>
         <script src="scripts/app.js"></script>
         <script src="scripts/controllers.js"></script>
         <script src="scripts/directives.js"></script>
@@ -107,15 +108,15 @@
                                 link    : '#/9'
                             },
                             {
-                                title   : 'Unit Tests',
+                                title   : 'Cookies',
                                 link    : '#/10'
                             },
                             {
-                                title   : 'End to End tests',
+                                title   : 'Unit Tests',
                                 link    : '#/11'
                             },
                             {
-                                title   : 'Development tools',
+                                title   : 'End to End tests',
                                 link    : '#/12'
                             },
                             {
@@ -453,12 +454,42 @@ function TweetsCtrl($scope){
                         <div class="span6">
                             <h2>Dependency injection</h2>
                             <hr>
+                            <ul>
+                                <li>Modules</li>
+                                <li>Controllers</li>
+                                <li>Resources</li>
+                                <li>Factory</li>
+                                <li>Filters</li>
+                                <li>Directives</li>
+                                <li>...</li>
+                            </ul>
                         </div>
                         <div class="span6">
                     <pre><code data-trim contenteditable>
+angular.module('angularDemoApp', [
+    'ngCookies',
+    'angularDemoApp.services',
+    'angularDemoApp.directives',
+    'dateDeltaFilter']).config(function ($routeProvider) {
+...
                     </code></pre>
 
                     <pre><code data-trim contenteditable>
+function Ctrl(                  //Bad : Ctrl is global
+    $rootScope,
+    $scope,
+    $location,
+    User,
+    $cookies) {
+...
+
+.controller('Ctrl', function (  //Good : Ctrl is injected
+    $rootScope,
+    $scope,
+    $location,
+    User,
+    $cookies) {
+...
                     </code></pre>
                         </div>
                     </div>
@@ -470,12 +501,128 @@ function TweetsCtrl($scope){
                         <div class="span6">
                             <h2>Events</h2>
                             <hr>
+                            <script>
+                                function SubmitTweetCtrl($scope){
+                                    $scope.submitTweet = function(){
+                                        if($scope.readyToSubmit){
+                                            alert($scope.tweetText);
+                                            $scope.tweetText = '';
+                                        }
+                                    };
+
+                                    $scope.$watch('tweetText', function() {
+                                        $scope.readyToSubmit = $scope.tweetText.length > 0 && 140 - $scope.tweetText.length >= 0;
+                                    });
+                                }
+                            </script>
+                            <form class="row-fluid well span9 offset2" ng-controller="SubmitTweetCtrl">
+                                <textarea class="span12" ng-model="tweetText" ng-init="tweetText=''" placeholder="Write a new Tweet..."></textarea>
+                                <button class="btn"><i class="icon-camera"></i></button>
+                                <button class="btn"><i class="icon-map-marker"></i></button>
+                                <input class="btn btn-info pull-right" ng-class="{'disabled' : !readyToSubmit}" type="button" value="Tweet" ng-click="submitTweet()"/>
+                                <strong class="muted pull-right" ng-class="{'text-error' : !readyToSubmit}">{{140 - tweetText.length}} &nbsp;&nbsp;</strong>
+                            </form>
                         </div>
                         <div class="span6">
                     <pre><code data-trim contenteditable>
+function SubmitTweetCtrl($scope){
+    $scope.submitTweet = function(){
+        if($scope.readyToSubmit){
+            alert($scope.tweetText);
+            $scope.tweetText = '';
+        }
+    };
+    $scope.$watch('tweetText', function() {
+        $scope.readyToSubmit =
+            $scope.tweetText.length > 0
+                        &&
+            140 - $scope.tweetText.length >= 0;
+    });
+}
+                    </code></pre>
+                        </div>
+                    </div>
+                    <div class="span12">
+                        <pre><code data-trim contenteditable>
+<form class="row-fluid span9 offset2" ng-controller="SubmitTweetCtrl">
+  <textarea class="span12" ng-model="tweetText" ng-init="tweetText=''" placeholder="Write a new Tweet..."></textarea>
+
+  <button class="btn"><i class="icon-camera"></i></button>
+  <button class="btn"><i class="icon-map-marker"></i></button>
+
+  <input class="btn btn-info pull-right" ng-class="{'disabled' : !readyToSubmit}" type="button" value="Tweet" ng-click="submitTweet()"/>
+
+  <strong class="muted pull-right" ng-class="{'text-error' : !readyToSubmit}">{{140 - tweetText.length}} &nbsp;&nbsp;</strong>
+</form>
+                        </code></pre>
+                    </div>
+                </section>
+
+                <section class="row-fluid">
+
+                    <div class="span12">
+                        <div class="span6">
+                            <script>
+                                angular.module('angularPresentationApp.services', ['ngResource'])
+                                        .factory('Tweet', ['$resource',
+                                            function ($resource) {
+                                                return $resource('http://search.twitter.com/search.json', {callback: 'JSON_CALLBACK'}, {
+                                                    query: {method: 'JSONP', params: {q: '', show_user: true, rpp: 2}}
+                                                });
+                                            }
+                                        ]);
+                                function ServiceCtrl($scope, Tweet){
+                                    $scope.tweets = Tweet.query({q: 'SQLI'});
+                                }
+                            </script>
+                            <h2>Services</h2>
+                            <hr>
+                            <table class="table" ng-controller="ServiceCtrl">
+                                <tr ng-repeat="tweet in tweets.results">
+                                    <td class="row-fluid">
+                                        <div class="span1">
+                                            <a ng-href="#/profile/{{tweet.from_user}}">
+                                                <img ng-src="{{tweet.profile_image_url}}" class="img-rounded"/>
+                                            </a>
+                                        </div>
+                                        <div class="span10">
+                                            <p>
+                                                <b>{{tweet.from_user_name}}</b> <span class="muted">@{{tweet.from_user}}</span>
+                                                <small class="muted pull-right">{{tweet.created_at}}</small>
+                                            </p>
+                                            <p><small>{{tweet.text}}</small></p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="span6">
+                    <pre><code data-trim contenteditable>
+angular.module('angularPresentationApp.services', ['ngResource'])
+    .factory('Tweet', ['$resource',
+        function ($resource) {
+            return $resource(
+               'http://search.twitter.com/search.json', {
+                    callback: 'JSON_CALLBACK'
+               }, {
+                    query: {
+                        method: 'JSONP',
+                        params: {
+                            q: '',
+                            show_user: true,
+                            rpp: 2
+                        }
+                    }
+        });
+    }
+]);
                     </code></pre>
 
                     <pre><code data-trim contenteditable>
+function ServiceCtrl($scope, Tweet){
+    $scope.tweets = Tweet.query({q: 'SQLI'});
+    //asynchronous model + view injection
+}
                     </code></pre>
                         </div>
                     </div>
@@ -484,15 +631,61 @@ function TweetsCtrl($scope){
                 <section class="row-fluid">
 
                     <div class="span12">
-                        <div class="span6">
-                            <h2>Services</h2>
+                        <div class="span6" ng-controller="ServiceCookiesCtrl">
+                            <script>
+                                function ServiceCookiesCtrl($scope, Tweet, $cookies){
+                                    if($cookies.tweets){
+                                        $scope.alreadyStore = true;
+                                        $scope.tweets = angular.fromJson($cookies.tweets);
+                                    }else{
+                                        $scope.alreadyStore = false;
+                                        $scope.tweets =Tweet.query({q: 'SQLI'}, function(tweets){
+                                            $cookies.tweets = JSON.stringify(tweets);
+                                        });
+                                    }
+                                }
+                            </script>
+                            <h2>Cookies</h2>
                             <hr>
+                            <p ng-show="alreadyStore" class="text-success">Request result is already in the cookie content!</p>
+                            <table class="table">
+                                <tr ng-repeat="tweet in tweets.results">
+                                    <td class="row-fluid">
+                                        <div class="span1">
+                                            <a ng-href="#/profile/{{tweet.from_user}}">
+                                                <img ng-src="{{tweet.profile_image_url}}" class="img-rounded"/>
+                                            </a>
+                                        </div>
+                                        <div class="span10">
+                                            <p>
+                                                <b>{{tweet.from_user_name}}</b> <span class="muted">@{{tweet.from_user}}</span>
+                                                <small class="muted pull-right">{{tweet.created_at}}</small>
+                                            </p>
+                                            <p><small>{{tweet.text}}</small></p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                         <div class="span6">
                     <pre><code data-trim contenteditable>
+function ServiceCookiesCtrl($scope, Tweet, $cookies){
+    if($cookies.tweets){
+        $scope.alreadyStore = true;
+        $scope.tweets = angular.fromJson($cookies.tweets);
+    }else{
+        $scope.alreadyStore = false;
+        $scope.tweets =Tweet.query({q: 'SQLI'}, function(tweets){
+            $cookies.tweets = JSON.stringify(tweets);
+        });
+    }
+}
                     </code></pre>
 
                     <pre><code data-trim contenteditable>
+&lt;p ng-show=&quot;alreadyStore&quot; class=&quot;text-success&quot;&gt;
+    Request result is already in the cookie content!
+&lt;/p&gt;
                     </code></pre>
                         </div>
                     </div>
@@ -503,12 +696,34 @@ function TweetsCtrl($scope){
                     <div class="span12">
                         <div class="span6">
                             <h2>Units Tests</h2>
+                            <hr>
+                            <ul>
+                                <li>Controllers</li>
+                                <li>Filters</li>
+                                <li>Services</li>
+                                <li>Directives</li>
+                            </ul>
                         </div>
                         <div class="span6">
                     <pre><code data-trim contenteditable>
+describe('filters formatedtext', function() {
+    it('should show be without capitals letters',
+        inject(function(formatedtext) {
+
+        expect(formatedtext('HellO')).toBe('hello');
+        expect(formatedtext('FOO BAr')).toBe('foo bar');
+    }));
+});
                     </code></pre>
 
                     <pre><code data-trim contenteditable>
+describe('ServiceCtrl', function(){
+    it('should render 2 tweets', function() {
+        var scope = {},
+        ctrl = new ServiceCtrl(scope);
+        expect(scope.tweets.length).toBe(2);
+    });
+});
                     </code></pre>
                         </div>
                     </div>
@@ -520,29 +735,28 @@ function TweetsCtrl($scope){
                         <div class="span6">
                             <h2>End to End tests</h2>
                             <hr>
+                            <img class="span6 offset3" src="http://docs.angularjs.org/img/guide/scenario_runner.png"/>
                         </div>
                         <div class="span6">
                     <pre><code data-trim contenteditable>
+...
+it('should render tweets specific search', function() {
+    input('query').enter('SQLI');
+    element('.search li a').click();
+    expect(browser().location().url()).toBe('/search/SQLI');
+});
+...
                     </code></pre>
 
                     <pre><code data-trim contenteditable>
-                    </code></pre>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="row-fluid">
-
-                    <div class="span12">
-                        <div class="span6">
-                            <h2>Development tools</h2>
-                            <hr>
-                        </div>
-                        <div class="span6">
-                    <pre><code data-trim contenteditable>
-                    </code></pre>
-
-                    <pre><code data-trim contenteditable>
+describe('Search detail view', function() {
+    beforeEach(function() {
+        browser().navigateTo('../../app/index.html#/search/SQLI');
+    });
+    it('should display placeholder page with q parameter', function() {
+    expect(binding('q')).toBe('SQLI');
+    });
+});
                     </code></pre>
                         </div>
                     </div>
@@ -554,13 +768,38 @@ function TweetsCtrl($scope){
                         <div class="span6">
                             <h2>Demo</h2>
                             <hr>
+                            <h3>A simple web app :</h3>
+                            <a href="https://github.com/robinComa/angularDemo"><img class=" offset1 span5" src="img/Octocat.png"/></a>
+                            <a href="https://github.com/robinComa/angularDemo"><img class=" offset1 span5" src="img/demo.png"/></a>
+                            <h3>ecosystem :</h3>
+                            <ul>
+                                <li><a href="http://twitter.github.io/bootstrap/">Twitter Bootstrap</a></li>
+                                <li><a href="http://fortawesome.github.io/Font-Awesome/">Font awesome</a></li>
+                                <li><a href="http://yeoman.io/">Yeoman (yo + bower + grunt)</a></li>
+                            </ul>
                         </div>
                         <div class="span6">
-                    <pre><code data-trim contenteditable>
-                    </code></pre>
-
-                    <pre><code data-trim contenteditable>
-                    </code></pre>
+                            <ul>
+                                <li>scripts<ul>
+                                    <li>controller<ul>
+                                        <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/scripts/controllers/controllers.js">controllers.js</a></li>
+                                    </ul></li>
+                                    <li>directives<ul>
+                                        <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/scripts/directives/directives.js">directives.js</a></li>
+                                    </ul>filters<ul>
+                                        <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/scripts/filters/filters.js">filters.js</a></li>
+                                    </ul></li>
+                                    <li>services<ul>
+                                        <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/scripts/services/services.js">services.js</a></li>
+                                    </ul></li>
+                                    <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/scripts/app.js">app.js</a></li>
+                                </ul></li>
+                                <li>views<ul>
+                                    <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/views/profile.html">profile.html</a></li>
+                                    <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/views/tweets.html">tweets.html</a></li>
+                                </ul></li>
+                                <li><a href="https://github.com/robinComa/angularDemo/blob/master/app/index.html">index.html</a></li>
+                            </ul>
                         </div>
                     </div>
                 </section>
@@ -601,9 +840,26 @@ function TweetsCtrl($scope){
                 <section class="row-fluid">
 
                     <div class="span12">
-                        <div class="span6">
+                        <div class="span6" ng-controller="EndCtrl">
+                            <script>
+                                function EndCtrl($scope){
+                                    var text = 'HTML is great for declaring static documents, but it falters when we try to use it for declaring dynamic views in web-applications. AngularJS lets you extend HTML vocabulary for your application. The resulting environment is extraordinarily expressive, readable, and quick to develop.';
+                                    var i = 0;
+                                    setInterval(function(){
+                                        $scope.$apply(function() {
+                                            if(text.length > i){
+                                                $scope.textAuto = text.substr(0, i);
+                                                i++;
+                                            }else{
+                                                i = 0;
+                                            }
+                                        });
+                                    }, 100);
+                                }
+                            </script>
                             <h2>Thanks and enjoy</h2>
                             <hr>
+                            <h3 ng-init="textAuto = ''">{{textAuto}}</h3>
                         </div>
                         <div class="span6">
                             <img src="http://lauterry.github.io/slides-prez-angular/img/angularjs.png"/>
